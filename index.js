@@ -2,43 +2,67 @@ const fs = require("fs");
 const file = process.argv[2];
 const text = fs.readFileSync(file).toString();
 
-let start = false;
-let end = false;
-let innerTag = "";
+const render = (text, data) => {
+  let start = false;
+  let end = false;
+  let innerTag = "";
+  let charType = "";
+  let output = "";
 
-function render(text, data) {
-	let output = "";
-	for (let i = 0, len = text.length; i < len; i++) {
-		const char = text[i];
-		if (char === '{') {
-			start = true;
-		}
-		if (char === '}') {
-			end = true;
-		}
-		if (start === true) {
-			innerTag += char;
-		}
-		if (!start && !end) {
-			output += char;
-		}
-		if (start && end) {
-			start = false;
-			end = false;
-			let value = data[innerTag];
-			output += value;
-			innerTag = "";
-		}
-	}
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
 
-	return output;
+    if (char === '{' || (char === '[' && text[i + 1] === '[')) {
+      start = true;
+      charType = char;
+      innerTag = "";
+    }
+
+    if (char === '}' || (char === ']' && text[i + 1] === ']')) {
+      end = true;
+    }
+
+    if (start === true) {
+      innerTag += char;
+    }
+
+    if (!start && !end) {
+      output += char;
+    }
+
+    if (start && end) {
+      start = false;
+      end = false;
+      if (charType === "{") {
+		let value = data[innerTag.substring(1, innerTag.length - 1)];
+        
+          output += value;
+        
+      } else if (charType === "[") {
+        let value = data[innerTag.substring(2, innerTag.length - 1)];
+          output += value;
+      }
+      innerTag = "";
+	  i++
+    }
+  }
+
+  return output;
 }
 
 const data = {
-	name: "John",
+  name: "John",
 }
 
 const output = render(text, data);
 console.log('Output is : ');
 console.log(output);
 fs.writeFileSync("output.txt", output);
+
+
+
+// const render = (text, data) => {
+// 	return text.replace(/(\[\[name\]\])|(\{name\})/g, data.name)
+// }
+
+
