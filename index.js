@@ -1,49 +1,44 @@
 const fs = require("fs");
 const file = process.argv[2];
 const text = fs.readFileSync(file).toString();
-
-const render = (text, data) => {
-  let start = false;
-  let end = false;
-  let innerTag = "";
-  let charType = "";
+//add a new params
+const render = (text, data, delimiters) => {
   let output = "";
+  let i = 0;
 
-  for (let i = 0; i < text.length; i++) {
-    const char = text[i];
-
-    if (char === '{' || (char === '[' && text[i + 1] === '[')) {
-      start = true;
-      charType = char;
-      innerTag = "";
-    }
-
-    if (char === '}' || (char === ']' && text[i + 1] === ']')) {
-      end = true;
-    }
-
-    if (start === true) {
-      innerTag += char;
-    }
-
-    if (!start && !end) {
-      output += char;
-    }
-
-    if (start && end) {
-      start = false;
-      end = false;
-      if (charType === "{") {
-		let value = data[innerTag.substring(1, innerTag.length - 1)];
-        
-          output += value;
-        
-      } else if (charType === "[") {
-        let value = data[innerTag.substring(2, innerTag.length - 1)];
-          output += value;
+  //run the text
+  while (i < text.length) {
+    let found = false;
+    //loop on the delimiters array
+    for (const delimiterSet of delimiters) {
+      //set the start and ending of each delimiters 
+      const startDelimiter = delimiterSet[0];
+      const endDelimiter = delimiterSet[1];
+      //if a delimiter start 
+      if (text.startsWith(startDelimiter, i)) {
+        //delimit the beetween of delimiters
+        const startIndex = i + startDelimiter.length;
+        const endIndex = text.indexOf(endDelimiter, startIndex);
+        // endIndex is not at the delimiter closer
+        if (endIndex !== -1) {
+          // we stock the text beetween
+          const key = text.substring(startIndex, endIndex);
+          output += data[key] || "";
+          //update i position to skip the last delimiter 
+          i = endIndex + endDelimiter.length;
+          //a delimiter is found
+          found = true;
+          //stop the loop
+          break;
+        }
       }
-      innerTag = "";
-	  i++
+    }
+      //if not found it means we don't have a delimiter 
+    if (!found) {
+      // so add the original text, the error isn't corrected
+      output += text[i];
+      //increment 
+      i++;
     }
   }
 
@@ -53,16 +48,10 @@ const render = (text, data) => {
 const data = {
   name: "John",
 }
+//personalised delemiters
+const delimiters = [['{', '}'], ['[[', ']]'], ['%', '%']]; 
 
-const output = render(text, data);
+const output = render(text, data, delimiters);
 console.log('Output is : ');
 console.log(output);
 fs.writeFileSync("output.txt", output);
-
-
-
-// const render = (text, data) => {
-// 	return text.replace(/(\[\[name\]\])|(\{name\})/g, data.name)
-// }
-
-
