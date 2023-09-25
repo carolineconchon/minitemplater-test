@@ -1,7 +1,7 @@
 const fs = require("fs");
 const file = process.argv[2];
 const text = fs.readFileSync(file).toString();
-//add a new params
+
 const render = (text, data, delimiters) => {
   let output = "";
   let i = 0;
@@ -9,17 +9,29 @@ const render = (text, data, delimiters) => {
   //run the text
   while (i < text.length) {
     let found = false;
-    //loop on the delimiters array
+
     for (const delimiterSet of delimiters) {
       //set the start and ending of each delimiters 
       const startDelimiter = delimiterSet[0];
       const endDelimiter = delimiterSet[1];
-      //if a delimiter start 
-      if (text.startsWith(startDelimiter, i)) {
-        //delimit the beetween of delimiters
+
+      if (text.startsWith(startDelimiter + '#', i)) {
+        // Début d'une liste
+        const key = text.substring(i + startDelimiter.length + 1, text.indexOf(endDelimiter, i));
+        const listData = data[key] || [];
+        
+        // Crée la liste en ajoutant chaque élément avec un saut de ligne
+        listData.forEach(item => {
+          output += `- ${item.name}\n`;
+        });
+
+        i = text.indexOf(endDelimiter, i) + endDelimiter.length;
+        found = true;
+        break;
+      } else if (text.startsWith(startDelimiter, i)) {
         const startIndex = i + startDelimiter.length;
         const endIndex = text.indexOf(endDelimiter, startIndex);
-        // endIndex is not at the delimiter closer
+
         if (endIndex !== -1) {
           // we stock the text beetween
           const key = text.substring(startIndex, endIndex);
@@ -33,7 +45,7 @@ const render = (text, data, delimiters) => {
         }
       }
     }
-      //if not found it means we don't have a delimiter 
+
     if (!found) {
       // so add the original text, the error isn't corrected
       output += text[i];
@@ -43,13 +55,17 @@ const render = (text, data, delimiters) => {
   }
 
   return output;
-}
+};
 
 const data = {
-  name: "John",
-}
-//personalised delemiters
-const delimiters = [['{', '}'], ['[[', ']]'], ['%', '%']]; 
+  users: [
+    { name: "John" },
+    { name: "Patricia" },
+    { name: "Sacha" }
+  ]
+};
+
+const delimiters = [['{', '}'], ['[[', ']]'], ['%', '%']];
 
 const output = render(text, data, delimiters);
 console.log('Output is : ');

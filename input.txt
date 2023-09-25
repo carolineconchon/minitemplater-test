@@ -1,4 +1,7 @@
 Hello {name}
 Hello [[name]]
+
 hello %name%
-Hello ^name^
+{#users}
+- {name}
+{/}
